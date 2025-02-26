@@ -27,9 +27,9 @@ ggplot(data = wa_long, aes(x=Year, y=DivorceRate)) +
 
 GDP_percentage <- read.csv("WA_GDP.csv")
 
-WA_total_GDP_perc <- GDP[1,9:34]
+WA_total_GDP_perc <- GDP_percentage[1,9:34]
 
-WA_GDP_long_perc <- WA_total_GDP %>%
+WA_GDP_long_perc <- WA_total_GDP_perc %>%
   pivot_longer(
     cols = starts_with("X"), 
     names_to = "Year",        
@@ -72,10 +72,27 @@ expenditures_long <- Expenditures %>%
   ) %>%
   mutate(Year = as.integer(str_remove(Year, "X")))
 
+marriages <- read.csv("marriage_rates.csv")
+wa_marriage <- marriages[48,2:26]
+
+wa_marriage <- wa_marriage[,] %>%
+  mutate(across(everything(), as.character))
+
+
+wa_long_mar <- wa_marriage %>%
+  pivot_longer(
+    cols = starts_with("X"), 
+    names_to = "Year",        
+    values_to = "MarriageRate" 
+  ) %>%
+  mutate(Year = as.integer(str_remove(Year, "X")))
+
+wa_long_mar <- wa_long_mar[1:26,]
 
 wa_combined <- wa_long %>%
   left_join(WA_GDP_long_perc, by = "Year") %>%
   left_join(pi_long, by = "Year") %>%
   left_join(rgdp_long, by = "Year") %>%
-  left_join(expenditures_long, by = "Year")
+  left_join(expenditures_long, by = "Year") %>%
+  left_join(wa_long_mar, by = "Year")
 
