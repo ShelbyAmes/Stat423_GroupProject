@@ -34,3 +34,5 @@ WA_GDP_long <- WA_total_GDP %>%
     values_to = "TotalGDP_PercentChange" 
   ) %>%
   mutate(Year = as.integer(str_remove(Year, "X")))
+
+##just seeing if commit works
