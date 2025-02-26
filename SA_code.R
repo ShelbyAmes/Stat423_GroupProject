@@ -26,3 +26,11 @@ personal_income <- read.csv("SAINC70_WA_2000_2023.csv")
 GDP <- read.csv("WA_GDP.csv")
 
 WA_total_GDP <- GDP[1,9:34]
+
+WA_GDP_long <- WA_total_GDP %>%
+  pivot_longer(
+    cols = starts_with("X"), 
+    names_to = "Year",        
+    values_to = "TotalGDP_PercentChange" 
+  ) %>%
+  mutate(Year = as.integer(str_remove(Year, "X")))
