@@ -111,3 +111,39 @@ library(corrplot)
 png("corrplot.png")
 corrplot(cor(wa_combined[,]))
 dev.off()
+
+##model 2a
+par(mfrow = c(1,1))
+plot(wa_combined$RealGDP, wa_combined$DivorceRate)
+model_2a <- lm(RealGDP ~ DivorceRate, data = wa_combined)
+summary(model_2a)
+par(mfrow = c(2,2))
+plot(model_2a, which = 1)
+plot(model_2a, which=2)
+
+
+model_2_log <- wa_combined %>%
+  mutate(log_GDP = log(RealGDP))
+
+plot(model_2_log$log_GDP, model_2_log$DivorceRate)
+model_2a_log <-lm(log_GDP ~ DivorceRate, data = model_2_log)
+summary(model_2a_log)
+plot(model_2a_log, which = 1)
+plot(model_2a_log, which=2)
+
+##model 2b
+par(mfrow = c(1,1))
+plot(wa_combined$RealGDP, wa_combined$MarriageRate)
+model_2b <- lm(RealGDP ~ MarriageRate, data = wa_combined)
+summary(model_2b)
+par(mfrow = c(1,2))
+plot(model_2b, which = 1)
+plot(model_2b, which=2)
+
+par(mfrow = c(1,1))
+plot(model_2_log$log_GDP, model_2_log$MarriageRate)
+model_2b_log <-lm(log_GDP ~ MarriageRate, data = model_2_log)
+summary(model_2b_log)
+par(mfrow = c(1,2))
+plot(model_2b_log, which = 1)
+plot(model_2b_log, which=2)
