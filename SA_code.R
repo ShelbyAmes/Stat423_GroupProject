@@ -96,3 +96,16 @@ wa_combined <- wa_long %>%
   left_join(expenditures_long, by = "Year") %>%
   left_join(wa_long_mar, by = "Year")
 
+wa_combined <- wa_combined %>%
+  mutate(across(c(DivorceRate, TotalGDP_PercentChange, PersonalIncome, 
+                  RealGDP, PersonalExpenditures, MarriageRate), as.numeric))
+
+wa_combined <-wa_combined[1:23,]
+
+
+
+
+##correlation matrix
+library(corrplot)
+
+corrplot(cor(wa_combined[,]))
