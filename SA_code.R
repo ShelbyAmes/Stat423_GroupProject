@@ -110,6 +110,7 @@ library(corrplot)
 
 corrplot(cor(wa_combined[,]))
 <<<<<<< HEAD
+<<<<<<< HEAD
 dev.off()
 
 ##model 2a
@@ -148,5 +149,7 @@ par(mfrow = c(1,2))
 plot(model_2b_log, which = 1)
 plot(model_2b_log, which=2)
 
+=======
+>>>>>>> 37815be5ca08f44bb691f58f433cca3a18b99e3f
 =======
 >>>>>>> 37815be5ca08f44bb691f58f433cca3a18b99e3f

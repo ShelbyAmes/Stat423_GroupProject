@@ -27,9 +27,9 @@ ggplot(data = wa_long, aes(x=Year, y=DivorceRate)) +
 
 GDP_percentage <- read.csv("WA_GDP.csv")
 
-WA_total_GDP_perc <- GDP[1,9:34]
+WA_total_GDP_perc <- GDP_percentage[1,9:34]
 
-WA_GDP_long_perc <- WA_total_GDP %>%
+WA_GDP_long_perc <- WA_total_GDP_perc %>%
   pivot_longer(
     cols = starts_with("X"), 
     names_to = "Year",        
@@ -72,10 +72,82 @@ expenditures_long <- Expenditures %>%
   ) %>%
   mutate(Year = as.integer(str_remove(Year, "X")))
 
+marriages <- read.csv("marriage_rates.csv")
+wa_marriage <- marriages[48,2:26]
+
+wa_marriage <- wa_marriage[,] %>%
+  mutate(across(everything(), as.character))
+
+
+wa_long_mar <- wa_marriage %>%
+  pivot_longer(
+    cols = starts_with("X"), 
+    names_to = "Year",        
+    values_to = "MarriageRate" 
+  ) %>%
+  mutate(Year = as.integer(str_remove(Year, "X")))
+
+wa_long_mar <- wa_long_mar[1:26,]
 
 wa_combined <- wa_long %>%
   left_join(WA_GDP_long_perc, by = "Year") %>%
   left_join(pi_long, by = "Year") %>%
   left_join(rgdp_long, by = "Year") %>%
-  left_join(expenditures_long, by = "Year")
+  left_join(expenditures_long, by = "Year") %>%
+  left_join(wa_long_mar, by = "Year")
 
+wa_combined <- wa_combined %>%
+  mutate(across(c(DivorceRate, TotalGDP_PercentChange, PersonalIncome, 
+                  RealGDP, PersonalExpenditures, MarriageRate), as.numeric))
+
+wa_combined <-wa_combined[1:23,]
+
+### MALIA'S CODE STARTS HERE ###
+
+## pairs to compare ints
+panel.hist <- function(x){
+  usr <- par("usr")
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "darkgreen",)
+}
+
+pairs(x = wa_combined[, c("TotalGDP_PercentChange",
+                          "DivorceRate",
+                          "PersonalIncome",
+                          "RealGDP",
+                          "PersonalExpenditures",
+                          "MarriageRate")],
+      panel = panel.smooth,
+      diag.panel = panel.hist)
+
+
+## MODEL 2c
+model2c <- lm(RealGDP~I(PersonalExpenditures^3) + I(DivorceRate^2) + MarriageRate,
+            data=wa_combined)
+summary(model2c)
+
+par(mfrow = c(1, 2))
+plot(model2c, which=1)
+plot(model2c, which =2)
+qqline(resid(model2c))
+
+## MODEL 2d
+model2d1 <- lm(log(TotalGDP_PercentChange)~DivorceRate,
+              data=wa_combined)
+summary(model2d1)
+
+par(mfrow = c(1, 2))
+plot(model2d1, which=1)
+plot(model2d1, which =2)
+qqline(resid(model2d1))
+
+wa_comb_2d <- wa_combined[-c(3),]
+
+plot(log(wa_comb_2d$TotalGDP_PercentChange), wa_comb_2d$DivorceRate)
+
+model2d2 <- lm(log(TotalGDP_PercentChange)~DivorceRate,
+              data=wa_comb_2d)
+summary(model2d2)
