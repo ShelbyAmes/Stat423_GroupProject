@@ -147,3 +147,4 @@ summary(model_2b_log)
 par(mfrow = c(1,2))
 plot(model_2b_log, which = 1)
 plot(model_2b_log, which=2)
+
