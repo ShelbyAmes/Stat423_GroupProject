@@ -33,7 +33,7 @@ WA_GDP_long_perc <- WA_total_GDP_perc %>%
   pivot_longer(
     cols = starts_with("X"), 
     names_to = "Year",        
-    values_to = "Total_PercChange_GDP" 
+    values_to = "TotalGDP_PercentChange" 
   ) %>%
   mutate(Year = as.integer(str_remove(Year, "X")))
 
@@ -97,7 +97,7 @@ wa_combined <- wa_long %>%
   left_join(wa_long_mar, by = "Year")
 
 wa_combined <- wa_combined %>%
-  mutate(across(c(DivorceRate, Total_PercChange_GDP, PersonalIncome, 
+  mutate(across(c(DivorceRate, TotalGDP_PercentChange, PersonalIncome, 
                   RealGDP, PersonalExpenditures, MarriageRate), as.numeric))
 
 wa_combined <-wa_combined[1:23,]
@@ -108,8 +108,8 @@ wa_combined <-wa_combined[1:23,]
 ##correlation matrix
 library(corrplot)
 
-png("corrplot.png")
 corrplot(cor(wa_combined[,]))
+<<<<<<< HEAD
 dev.off()
 
 ##model 2a
@@ -148,3 +148,5 @@ par(mfrow = c(1,2))
 plot(model_2b_log, which = 1)
 plot(model_2b_log, which=2)
 
+=======
+>>>>>>> 37815be5ca08f44bb691f58f433cca3a18b99e3f
