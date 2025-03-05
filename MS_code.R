@@ -125,7 +125,7 @@ pairs(x = wa_combined[, c("TotalGDP_PercentChange",
 
 
 ## MODEL 2c
-model2c <- lm(RealGDP~MarriageRate+DivorceRate+PersonalIncome+PersonalExpenditures,
+model2c <- lm(RealGDP~I(PersonalExpenditures^3) + I(DivorceRate^2) + MarriageRate,
             data=wa_combined)
 summary(model2c)
 
@@ -134,3 +134,20 @@ plot(model2c, which=1)
 plot(model2c, which =2)
 qqline(resid(model2c))
 
+## MODEL 2d
+model2d1 <- lm(log(TotalGDP_PercentChange)~DivorceRate,
+              data=wa_combined)
+summary(model2d1)
+
+par(mfrow = c(1, 2))
+plot(model2d1, which=1)
+plot(model2d1, which =2)
+qqline(resid(model2d1))
+
+wa_comb_2d <- wa_combined[-c(3),]
+
+plot(log(wa_comb_2d$TotalGDP_PercentChange), wa_comb_2d$DivorceRate)
+
+model2d2 <- lm(log(TotalGDP_PercentChange)~DivorceRate,
+              data=wa_comb_2d)
+summary(model2d2)
