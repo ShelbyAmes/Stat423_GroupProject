@@ -1,0 +1,20 @@
+---
+title: "STAT 423 Final Report"
+author: "Andrew Sousa, Shelby Ames, Malia Schomaker, Sebastian Villarroel"
+date: "2025-03-08"
+output: pdf_document
+---
+
+# Introduction
+
+# Methods of Analysis
+
+# Models
+
+# Results
+
+# Conclusions
+
+# References
+
+# Appendix
