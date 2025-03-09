@@ -7,9 +7,28 @@ output: pdf_document
 
 # Introduction
 
+# Questions
+With this study, we look to answer four questions:
+
+## 1) What are the relationships between GDP and divorce rates?
+## 2) What is the best economic predictor for divorce rates?  
+## 3) Would a population’s relationship with their spouse be a good indicator for the economy?
+## 4) How do our relationships change when personal income, GDP, and expenditures change?
+
 # Methods of Analysis
+```{r label = "code", eval = TRUE, echo = FALSE}
+
+```
+
 
 # Models
+To answer our questions, we have created a multitude of models to find the relationships between our variables
+
+## Model 1a) Simple Linear Regression Model (GDP ~ Divorce Rate)
+For a baseline assessment, we will first look at a simple model, analyzing the relationship between GDP and divorce rate. Simply,
+
+$$\text{Divorce Rate} = \beta_o + GDP + \epsilon$$
+
 
 # Results
 
@@ -18,3 +37,7 @@ output: pdf_document
 # References
 
 # Appendix
+``` {r ref.label = "code", eval = FALSE}
+
+```
+
