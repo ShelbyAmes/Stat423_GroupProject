@@ -111,6 +111,41 @@ library(corrplot)
 corrplot(cor(wa_combined[,]))
 dev.off()
 
+##check VIF
+library(car)
+mlr_model <- lm(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
+                data = wa_combined)
+vif(mlr_model)
+
+##pcr model 
+library(pls)
+pcr_model <- pcr(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
+                 data = wa_combined, 
+                 scale = TRUE, validation = "CV")
+summary(pcr_model)
+
+pc_scores <- pcr_model$scores
+
+cor(pc_scores)
+pcr_model$loadings
+
+##regression
+
+pc_scores_df <- as.data.frame(pcr_model$scores)
+
+pc_scores_df <- as.data.frame(pc_scores_df[complete.cases(pc_scores_df), ])
+
+divorce_rate_vector <- as.numeric(wa_combined$DivorceRate)
+
+pc_scores_df <- pc_scores_df %>%
+  mutate(DivorceRate = divorce_rate_vector)
+
+
+pc_reg <- lm(DivorceRate ~ `Comp 1` + `Comp 2` + `Comp 3`, data = pc_scores_df)
+summary(pc_reg)
+
+
+
 ##model 2a
 par(mfrow = c(1,1))
 plot(wa_combined$RealGDP, wa_combined$DivorceRate)
