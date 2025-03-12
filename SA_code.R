@@ -113,20 +113,24 @@ dev.off()
 
 ##check VIF
 library(car)
-mlr_model <- lm(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
+mlr_model_1b <- lm(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
                 data = wa_combined)
-vif(mlr_model)
+vif(mlr_model_1b)
+
+mlr_model_2c <- lm(RealGDP~I(PersonalExpenditures^3) + I(DivorceRate^2) + MarriageRate,
+                   data=wa_combined)
+vif(mlr_model_2c)
 
 ##pcr model 
 library(pls)
-pcr_model <- pcr(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
+pcr_model_1b <- pcr(DivorceRate ~ RealGDP+PersonalExpenditures+PersonalIncome, 
                  data = wa_combined, 
                  scale = TRUE, validation = "CV")
-summary(pcr_model)
+summary(pcr_model_1b)
 
-pc_scores <- pcr_model$scores
+pc_scores_1b <- pcr_model_1b$scores
 
-cor(pc_scores)
+cor(pc_scores_1b)
 pcr_model$loadings
 
 ##regression
@@ -162,8 +166,28 @@ model_2_log <- wa_combined %>%
 plot(model_2_log$log_GDP, model_2_log$DivorceRate)
 model_2a_log <-lm(log_GDP ~ DivorceRate, data = model_2_log)
 summary(model_2a_log)
+par(mfrow = c(1,2))
 plot(model_2a_log, which = 1)
 plot(model_2a_log, which=2)
+
+
+par(mfrow = c(1,1))
+two_a <- boxcox(model_2a, lambda = seq(-5, 5, 0.1), 
+                        main = "Box-Cox Transformation")
+
+lambda_2a <- two_a$x[which.max(two_a$y)]
+
+wa_combined$RealGDP_transformed_2a <- wa_combined$RealGDP^lambda_2a
+
+par(mfrow = c(1,1))
+residuals_2a <- residuals(model_2a_log)
+
+# Plot histogram
+hist(residuals_2a, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     col = "lightblue", 
+     border = "black")
 
 ##model 2b
 par(mfrow = c(1,1))
@@ -175,6 +199,16 @@ plot(model_2b, which = 1)
 plot(model_2b, which=2)
 
 par(mfrow = c(1,1))
+residuals_2b <- residuals(model_2b)
+
+# Plot histogram
+hist(residuals_2b, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     col = "lightblue", 
+     border = "black")
+
+par(mfrow = c(1,1))
 plot(model_2_log$log_GDP, model_2_log$MarriageRate)
 model_2b_log <-lm(log_GDP ~ MarriageRate, data = model_2_log)
 summary(model_2b_log)
@@ -182,3 +216,109 @@ par(mfrow = c(1,2))
 plot(model_2b_log, which = 1)
 plot(model_2b_log, which=2)
 
+par(mfrow = c(1,1))
+residuals_2b_log <- residuals(model_2b_log)
+
+# Plot histogram
+hist(residuals_2b, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     col = "lightblue", 
+     border = "black")
+
+
+
+library(MASS)
+
+# Perform Box-Cox transformation
+par(mfrow = c(1,1))
+two_b <- boxcox(model_2b, lambda = seq(-2, 2, 0.1), 
+       main = "Box-Cox Transformation")
+
+lambda <- two_b$x[which.max(two_b$y)]
+
+wa_combined$RealGDP_transformed <- wa_combined$RealGDP^lambda
+
+##with transformed data
+par(mfrow=c(1,1))
+plot(wa_combined$Year, wa_combined$MarriageRate)
+ggplot(data = wa_combined, aes(x = Year, y = MarriageRate)) +
+  geom_point() +  # Scatter plot of MarriageRate vs. Year
+  geom_smooth(method = "lm") +  # Regression line
+  labs(title = "Marriage Rate Over Time",
+       x = "Year",
+       y = "Marriage Rate") +
+  theme_minimal()
+model_transformed <- lm(RealGDP_transformed ~ MarriageRate, data = wa_combined)
+summary(model_transformed)
+par(mfrow = c(1,2))
+plot(model_transformed, which = 1)
+plot(model_transformed, which=2)
+
+par(mfrow = c(1,1))
+residuals_model_transformed <- residuals(model_transformed)
+
+# Plot histogram
+hist(residuals_model_transformed, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     col = "lightblue", 
+     border = "black")
+
+##ggplot with highlighted residuals
+library(ggplot2)
+library(dplyr)
+
+# Fit the linear model
+model <- lm(MarriageRate ~ Year, data = wa_combined)
+
+# Get predicted values and standard error of residuals
+wa_combined <- wa_combined %>%
+  mutate(pred = predict(model),  # Predicted MarriageRate
+         resid = MarriageRate - pred,  # Residuals
+         se = sd(resid),  # Standard error of residuals
+         outlier = abs(resid) > 2 * se)  # Flag outliers beyond 2 SE
+ggplot(wa_combined, aes(x = Year, y = MarriageRate, color = outlier)) +
+  geom_point(size = 2) +  # Scatter plot
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +  # Regression line with SE band
+  scale_color_manual(values = c("black", "red"), labels = c("Within SE", "Outside SE")) + 
+  labs(title = "Marriage Rate Over Time with Outliers Highlighted",
+       x = "Year",
+       y = "Marriage Rate",
+       color = "Outliers") +
+  theme_minimal()
+
+recession_years <- c(2008, 2009, 2020)
+
+# Create a new column in wa_combined
+wa_combined <- wa_combined %>%
+  mutate(Recession = ifelse(Year %in% recession_years, "Yes", "No"))
+
+
+# Ensure Recession is a factor
+wa_combined$Recession <- as.factor(wa_combined$Recession)
+
+# Fit a linear regression model
+model_recession <- lm(MarriageRate ~ Recession, data = wa_combined)
+model_recession <- lm(RealGDP ~ MarriageRate + Recession, data = wa_combined)
+# View summary of the model
+summary(model_recession)
+par(mfrow = c(1,2))
+plot(model_recession, which = 1)
+plot(model_recession, which=2)
+
+##Marriage ~ GDP
+twob_revised <- lm(MarriageRate ~ RealGDP, data= wa_combined)
+summary(twob_revised)
+
+
+library(MASS)
+
+# Perform Box-Cox transformation
+par(mfrow = c(1,1))
+two_b_revised <- boxcox(twob_revised, lambda = seq(-5, 5, 0.1), 
+                main = "Box-Cox Transformation")
+
+lambda_new <- two_b_revised$x[which.max(two_b_revised$y)]
+
+wa_combined$RealGDP_transformed_revised <- wa_combined$RealGDP^lambda_new
