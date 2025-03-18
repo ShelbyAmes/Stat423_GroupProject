@@ -5,6 +5,15 @@ date: "2025-03-08"
 output: pdf_document
 ---
 
+``{r label = "libraries", eval = TRUE, echo = FALSE}
+library(tidyverse)
+library(MASS)
+library(dplyr)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+library(gridExtra)
+```
 # Introduction
 
 # Questions
@@ -22,15 +31,95 @@ With this study, we look to answer four questions:
 
 
 # Models
+```{r label = "data", eval = TRUE, echo = FALSE}
+gdp <- read.csv("WA_GDP.csv")
+divorce <- read.csv("divorce_rates.csv")
+```
+
 To answer our questions, we have created a multitude of models to find the relationships between our variables
 
-## Model 1a) Simple Linear Regression Model (GDP ~ Divorce Rate)
-For a baseline assessment, we will first look at a simple model, analyzing the relationship between GDP and divorce rate. Simply,
+## Model 1b) Simple Linear Regression Model (GDP ~ Divorce Rate)
+For a baseline assessment, we will now look at a simple model, analyzing the relationship between GDP and divorce rate. Simply,
 
 $$\text{Divorce Rate} = \beta_o + GDP + \epsilon$$
 
+where GDP = percent change in total GDP from prior year and Divorce Rate = number of divorces per 1000.
+
 
 # Results
+
+## Model 1b) Struggles with simple linear regression
+```{r label = "slr_data", eval = TRUE, echo = FALSE}
+divorce <- divorce %>% filter(X == "Washington")
+
+gdp <- gdp[1,]
+
+gdp <- dplyr::select(gdp, c(-1, -3, -4, -5, -6, -7, -8))
+gdp <- gdp %>% rename(stat = GeoName)
+gdp$stat <- "gdp"
+gdp <- dplyr::select(gdp, c(-2,-3,-27))
+
+divorce <- dplyr::select(divorce, c(-27,-28,-29,-30,-31,-32))
+divorce <- dplyr::select(divorce, c(X, X2000, X2001, X2002, X2003, X2004, X2005, X2006, X2007, X2008, X2009, X2010, X2011, X2012, X2013, X2014, X2015, X2016, X2017, X2018, X2019, X2020, X2021, X2022))
+divorce <- divorce %>% rename(stat = X)
+divorce$stat <- "divorce_rate"
+
+gd_data <- rbind(gdp, divorce)
+gd_data <- gd_data %>% pivot_longer(cols = c(X2000, X2001, X2002, X2003, X2004, X2005, X2006, X2007, X2008, X2009, X2010, X2011, X2012, X2013, X2014, X2015, X2016, X2017, X2018, X2019, X2020, X2021, X2022),
+                                    names_to = "year",
+                                    values_to = "value") %>%
+  pivot_wider(names_from = stat, values_from = value)
+
+gd_data <- gd_data %>% mutate(gdp = as.numeric(gdp),
+                              divorce_rate = as.numeric(divorce_rate))
+
+gd_data <- gd_data %>% select(gdp, divorce_rate)
+```
+
+Despite many transformations and tests, a simple linear regression struggles massively to accurately predict divorce rate in Washington state.
+
+To start, we will create a basic model, with no transformations to see the initial relationship
+```{r, label = "basic_slr_model", eval = TRUE, echo = FALSE, fig.width = 4, fig.height = 4, fig.align='center'}
+gd_model <- lm(data = gd_data, formula = divorce_rate ~ gdp)
+gd_resid <- resid(gd_model)
+
+plot(gd_data, main = "Scatterplot of GDP vs Divorce Rate", xlab = "GDP", ylab = "Divorce Rate")
+abline(gd_model)
+
+hist(x = gd_resid, main = "Histogram of Divorce Rate ~ GDP Residuals")
+```
+An initial model looks to have many problems. GDP and Divorce Rate don't seem to follow any linear pattern, with many points falling well outside our best-fit line. Additionally, our residual plot shows a pattern in residuals, increasing until a fitted value of 3.85 before falling down again. A QQ-plot shows nearly half our residuals falling off the Normal line, meaning our residuals are not normally distributed. 
+
+Alongside a p-value of 0.106 for gdp, and an $R^2$ of 0.1199, without transformations, GDP does a poor job of predicting Divorce Rate in Washington. We will try some transformations to see if the model can be improved, or conclude that we need more variables.
+
+### Transformations
+We are trying three transformations: log, square root, and lastly using the box-cox method
+```{r label = "slr_trans_models", eval = TRUE, echo = FALSE, fig.width = 4, fig.height = 4}
+# log transformation
+gd_log <- data.frame("gdp" = gd_data$gdp,
+                     "divorce_rate" = log(gd_data$divorce_rate+ 0.001))
+
+# square root transformation
+gd_sqrt <- data.frame("gdp" = gd_data$gdp, 
+                      "divorce_rate" = sqrt(gd_data$divorce_rate))
+
+# box-cox derived transformation
+gd_boxcox <- data.frame("gdp" = gd_data$gdp,
+                        "divorce_rate" = (gd_data$divorce_rate)^(-0.15))
+
+gd_log_model <- lm(data = gd_log, formula = divorce_rate ~ gdp)
+gd_sqrt_model <- lm(data = gd_sqrt, formula = divorce_rate ~ gdp)
+gd_boxcox_model <- lm(data = gd_boxcox, formula = divorce_rate ~ gdp)
+```
+
+We will do an anova test, to see if any of our models is any better than our original in predicting divorce rate
+
+```{r label = "slr_anova", eval = TRUE, echo = FALSE}
+anova(gd_log_model)
+anova(gd_sqrt_model)
+anova(gd_boxcox_model)
+```
+For each model, we have p-values above 0.1, well above a desired significance level of 0.05. With this, we don't have statistically significant evidence that our SLR models are any better at predicting divorce rate than just a null. As such, it seems definitive that GDP alone is not enough to accurately predict divorce rate, and will need to look at more variables in future models. 
 
 # Conclusions
 
@@ -40,4 +129,31 @@ $$\text{Divorce Rate} = \beta_o + GDP + \epsilon$$
 ``` {r ref.label = "code", eval = FALSE}
 
 ```
+# Loading in packages
+```{r ref.label = "libraries", eval = FALSE, echo = TRUE}
 
+```
+
+# Reading the data into the file
+```{r ref.label = "data", eval = FALSE, echo = TRUE}
+```
+
+# Turning GDP and Divorce Rate into a single file for SLR
+```{r ref.label = "slr_data", eval = FALSE, echo = TRUE}
+
+```
+
+# Creating basic model for SLR
+```{r ref.label = "basic_slr_model", eval = FALSE, echo = TRUE}
+
+```
+
+# Transformations to SLR Model
+```{r ref.label = "slr_trans_models", eval = FALSE, echo = TRUE}
+
+```
+
+# SLR Model Anovas
+```{r ref.label = "slr_anova", eval = FALSE, echo = TRUE}
+
+```
